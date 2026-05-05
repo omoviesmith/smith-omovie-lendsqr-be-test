@@ -1,2 +1,7 @@
 PROJECT_DETAILS.md
 ASSESSMENT_CHECKLIST.md
+node_modules/
+dist/
+.env
+coverage/
+npm-debug.log*
