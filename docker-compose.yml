@@ -1,0 +1,37 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - '3000:3000'
+    depends_on:
+      - mysql
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      APP_NAME: demo-credit-api
+      API_PREFIX: /api/v1
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: password
+      DB_NAME: demo_credit
+      JWT_SECRET: change-me
+      JWT_EXPIRES_IN: 1d
+      ADJUTOR_API_KEY: change-me
+      ADJUTOR_BASE_URL: https://adjutor.lendsqr.com
+      ENCRYPTION_KEY: 12345678901234567890123456789012
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: demo_credit
+    ports:
+      - '3306:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:
