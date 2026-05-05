@@ -1,8 +1,14 @@
+import path from 'path';
+
 import knex, { type Knex } from 'knex';
 
 import { env } from './env';
 
 let dbInstance: Knex | null = null;
+
+const resolveDatabaseName = () => {
+  return env.NODE_ENV === 'test' ? `${env.DB_NAME}_test` : env.DB_NAME;
+};
 
 export const getDb = () => {
   if (!dbInstance) {
@@ -13,11 +19,19 @@ export const getDb = () => {
         port: env.DB_PORT,
         user: env.DB_USER,
         password: env.DB_PASSWORD,
-        database: env.DB_NAME,
+        database: resolveDatabaseName(),
       },
       pool: {
         min: 0,
         max: 10,
+      },
+      migrations: {
+        directory: path.resolve(__dirname, '../database/migrations'),
+        extension: 'ts',
+      },
+      seeds: {
+        directory: path.resolve(__dirname, '../database/seeds'),
+        extension: 'ts',
       },
     });
   }
@@ -31,3 +45,5 @@ export const closeDb = async () => {
     dbInstance = null;
   }
 };
+
+export const getDatabaseName = resolveDatabaseName;

@@ -89,6 +89,27 @@ describe('auth routes', () => {
     expect(response.body.token).toBeDefined();
   });
 
+  it('rejects login with the wrong password', async () => {
+    mockAdjutorNoMatch();
+    const app = createAuthTestApp();
+
+    await request(app).post('/api/v1/auth/register').send({
+      firstName: 'Omovie',
+      lastName: 'Smith',
+      email: 'omovie@example.com',
+      phone: '08012345678',
+      password: 'password123',
+    });
+
+    const response = await request(app).post('/api/v1/auth/login').send({
+      email: 'omovie@example.com',
+      password: 'wrongpassword',
+    });
+
+    expect(response.status).toBe(401);
+    expect(response.body.message).toBe('Invalid email or password');
+  });
+
   it('returns the authenticated user on /auth/me', async () => {
     mockAdjutorNoMatch();
     const app = createAuthTestApp();
