@@ -102,7 +102,7 @@ Money values should use `DECIMAL(19, 4)` in MySQL to avoid floating-point precis
 
 ## ER Diagram
 
-![Demo Credit ER Diagram](./docs/er-diagram.svg)
+![Demo Credit ER Diagram](./docs/er-diagram-dbdesigner.png)
 
 Relationship summary:
 
