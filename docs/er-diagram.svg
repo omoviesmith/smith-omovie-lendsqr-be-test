@@ -73,17 +73,17 @@
   <text x="375" y="258" class="cardinality">1 : 1</text>
   <text x="367" y="316" class="label">one user owns one wallet</text>
 
-  <line x1="745" y1="250" x2="840" y2="210" stroke="#64748B" stroke-width="3" marker-end="url(#arrow)"/>
-  <text x="758" y="212" class="cardinality">1 : many</text>
-  <text x="718" y="178" class="label">wallet ledger entries</text>
+  <line x1="745" y1="248" x2="840" y2="210" stroke="#64748B" stroke-width="3" marker-end="url(#arrow)"/>
+  <text x="695" y="166" class="label">wallet ledger entries</text>
+  <text x="730" y="194" class="cardinality">1 : many</text>
 
-  <line x1="745" y1="290" x2="840" y2="330" stroke="#64748B" stroke-width="3" marker-end="url(#arrow)"/>
-  <text x="752" y="350" class="cardinality">1 : many</text>
-  <text x="685" y="382" class="label">wallet as transfer source</text>
+  <line x1="745" y1="286" x2="840" y2="330" stroke="#64748B" stroke-width="3" marker-end="url(#arrow)"/>
+  <text x="665" y="410" class="label">wallet as transfer source</text>
+  <text x="730" y="382" class="cardinality">1 : many</text>
 
-  <line x1="745" y1="330" x2="840" y2="450" stroke="#64748B" stroke-width="3" marker-end="url(#arrow)"/>
-  <text x="755" y="450" class="cardinality">1 : many</text>
-  <text x="660" y="486" class="label">wallet as transfer destination</text>
+  <line x1="745" y1="326" x2="840" y2="450" stroke="#64748B" stroke-width="3" marker-end="url(#arrow)"/>
+  <text x="645" y="508" class="label">wallet as transfer destination</text>
+  <text x="730" y="480" class="cardinality">1 : many</text>
 
   <g>
     <rect x="70" y="610" width="1070" height="92" rx="18" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="2"/>
