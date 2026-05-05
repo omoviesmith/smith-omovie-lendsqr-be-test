@@ -97,6 +97,7 @@ High-level model:
 - One user owns one wallet
 - One wallet can have many transactions
 - Transfer operations create linked debit/credit records
+- `transactions.metadata` stores structured supplementary context as JSON
 
 Money values should use `DECIMAL(19, 4)` in MySQL to avoid floating-point precision errors.
 
@@ -264,4 +265,4 @@ https://<candidate-name>-lendsqr-be-test.<cloud-platform-domain>
 
 ## Current Repository State
 
-At the moment, this repository contains planning and assessment-alignment documentation only. The application code, migrations, tests, Swagger setup, and deployment configuration still need to be implemented.
+The repository now includes the project scaffold, database configuration, exported ER diagram, core Knex migrations, and baseline test wiring. The remaining work is implementing the actual authentication, blacklist integration, wallet business flows, transaction logic, and deployment-ready production behavior.
