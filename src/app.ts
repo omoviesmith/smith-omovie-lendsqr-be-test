@@ -7,6 +7,7 @@ import swaggerUi from 'swagger-ui-express';
 import { env } from './config/env';
 import { swaggerDocument } from './config/swagger';
 import { authRoutes } from './modules/auth/auth.routes';
+import { transactionRoutes } from './modules/transactions/transaction.routes';
 import { walletRoutes } from './modules/wallets/wallet.routes';
 import { errorMiddleware } from './shared/errors/error.middleware';
 
@@ -29,6 +30,7 @@ export const createApp = () => {
   app.use(`${env.API_PREFIX}/docs`, swaggerUi.serve, swaggerUi.setup(swaggerDocument));
   app.use(`${env.API_PREFIX}/auth`, authRoutes);
   app.use(`${env.API_PREFIX}/wallets`, walletRoutes);
+  app.use(`${env.API_PREFIX}/transactions`, transactionRoutes);
 
   app.use(errorMiddleware);
 

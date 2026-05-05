@@ -27,6 +27,29 @@ export class WalletRepository {
   async getWalletByUserId(userId: string, db: Knex = getDb()) {
     return db<WalletRecord>('wallets').where({ user_id: userId }).first();
   }
+
+  async getWalletByUserIdForUpdate(userId: string, trx: Knex.Transaction) {
+    return trx<WalletRecord>('wallets').where({ user_id: userId }).forUpdate().first();
+  }
+
+  async findByIdForUpdate(id: string, trx: Knex.Transaction) {
+    return trx<WalletRecord>('wallets').where({ id }).forUpdate().first();
+  }
+
+  async updateBalance(
+    walletId: string,
+    balance: string,
+    db: Knex | Knex.Transaction = getDb(),
+  ) {
+    await db<WalletRecord>('wallets')
+      .where({ id: walletId })
+      .update({
+        balance,
+        updated_at: db.fn.now(),
+      });
+
+    return this.findById(walletId, db as Knex);
+  }
 }
 
 export const walletRepository = new WalletRepository();

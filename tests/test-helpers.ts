@@ -1,4 +1,5 @@
 import request from 'supertest';
+import { getDb } from '../src/config/database';
 
 import { createApp } from '../src/app';
 
@@ -37,4 +38,21 @@ export const registerTestUser = async () => {
     app,
     response,
   };
+};
+
+export const fundWalletForTest = async (token: string, amount: number) => {
+  const app = createAuthTestApp();
+
+  return request(app)
+    .post('/api/v1/wallets/fund')
+    .set('Authorization', `Bearer ${token}`)
+    .send({ amount });
+};
+
+export const getUserWalletBalance = async (email: string) => {
+  const db = getDb();
+  const user = await db('users').where({ email }).first();
+  const wallet = await db('wallets').where({ user_id: user.id }).first();
+
+  return wallet.balance as string;
 };

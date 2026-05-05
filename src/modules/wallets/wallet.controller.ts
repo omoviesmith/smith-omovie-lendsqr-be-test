@@ -10,20 +10,20 @@ class WalletController {
     response.status(200).json(wallet);
   };
 
-  fundWallet = async (request: Request, response: Response) => {
-    const result = await walletService.fundWallet(request.body);
+  fundWallet = async (request: AuthenticatedRequest, response: Response) => {
+    const result = await walletService.fundWallet(request.auth!.userId, request.body);
 
     response.status(200).json(result);
   };
 
-  transferFunds = async (request: Request, response: Response) => {
-    const result = await walletService.transferFunds(request.body);
+  transferFunds = async (request: AuthenticatedRequest, response: Response) => {
+    const result = await walletService.transferFunds(request.auth!.userId, request.body);
 
     response.status(200).json(result);
   };
 
-  withdrawFunds = async (request: Request, response: Response) => {
-    const result = await walletService.withdrawFunds(request.body);
+  withdrawFunds = async (request: AuthenticatedRequest, response: Response) => {
+    const result = await walletService.withdrawFunds(request.auth!.userId, request.body);
 
     response.status(200).json(result);
   };

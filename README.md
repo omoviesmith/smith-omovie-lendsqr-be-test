@@ -26,7 +26,7 @@ This repository currently includes:
 - User registration
 - Login and authenticated access
 - Automatic wallet creation on signup
-- Simulated wallet funding
+- Wallet funding
 - Wallet withdrawal
 - Wallet transfer between users
 - Transaction ledger and history
@@ -251,7 +251,7 @@ https://<candidate-name>-lendsqr-be-test.<cloud-platform-domain>
 ## Assumptions
 
 - The wallet uses a single default currency unless multi-currency support is added later.
-- Funding and withdrawal are simulated because the assessment does not require external payment or payout integrations.
+- Funding and withdrawal are internal wallet-ledger operations because the assessment does not require external payment gateway or bank payout integrations.
 - JWT authentication is used as a pragmatic improvement over faux-token auth.
 - Blacklist screening is mandatory for onboarding.
 
@@ -265,4 +265,4 @@ https://<candidate-name>-lendsqr-be-test.<cloud-platform-domain>
 
 ## Current Repository State
 
-The repository now includes the project scaffold, database configuration, exported ER diagram, core Knex migrations, JWT-based authentication, onboarding-time blacklist screening, and baseline test wiring. The remaining work is implementing the full wallet money-movement business flows, transaction logic, richer test coverage, and deployment-ready production behavior.
+The repository now includes the project scaffold, database configuration, exported ER diagram, core Knex migrations, JWT-based authentication, onboarding-time blacklist screening, wallet funding/withdrawal/transfer flows with transaction scoping, transaction history listing, and baseline acceptance-oriented tests. The remaining work is richer test coverage, fuller API documentation, and deployment-ready production behavior.
