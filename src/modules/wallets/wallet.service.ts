@@ -10,6 +10,13 @@ import {
 import { transactionRepository } from '../transactions/transaction.repository';
 import { toTransactionResponse } from '../transactions/transaction.mapper';
 import { walletRepository } from './wallet.repository';
+import {
+  recordWalletTransaction,
+  requireWalletByUserId,
+  requireWalletByUserIdForUpdate,
+  updateWalletBalanceOrThrow,
+} from './wallet.helpers';
+import { toWalletResponse } from './wallet.mapper';
 import { generateReference } from '../../shared/utils/reference';
 import type {
   FundWalletInput,
@@ -19,19 +26,10 @@ import type {
 
 class WalletService {
   async getAuthenticatedWallet(userId: string) {
-    const wallet = await walletRepository.getWalletByUserId(userId);
-
-    if (!wallet) {
-      throw new AppError('Wallet not found', 404);
-    }
+    const wallet = await requireWalletByUserId(userId);
 
     return {
-      wallet: {
-        id: wallet.id,
-        userId: wallet.user_id,
-        balance: wallet.balance,
-        currency: wallet.currency,
-      },
+      wallet: toWalletResponse(wallet),
     };
   }
 
@@ -39,49 +37,30 @@ class WalletService {
     const amount = formatMoneyInput(payload.amount);
 
     return getDb().transaction(async (trx) => {
-      const wallet = await walletRepository.getWalletByUserIdForUpdate(userId, trx);
-
-      if (!wallet) {
-        throw new AppError('Wallet not found', 404);
-      }
+      const wallet = await requireWalletByUserIdForUpdate(userId, trx);
 
       const balanceBefore = wallet.balance;
       const balanceAfter = addMoney(balanceBefore, amount);
       const reference = generateReference('fund');
-
-      const updatedWallet = await walletRepository.updateBalance(String(wallet.id), balanceAfter, trx);
-
-      if (!updatedWallet) {
-        throw new AppError('Unable to update wallet balance', 500);
-      }
-
-      const transaction = await transactionRepository.create(
+      const updatedWallet = await updateWalletBalanceOrThrow(String(wallet.id), balanceAfter, trx);
+      const transaction = await recordWalletTransaction(
         {
           reference,
-          wallet_id: wallet.id,
-          type: 'FUNDING',
+          walletId: wallet.id,
+          transactionType: 'FUNDING',
           amount,
-          balance_before: balanceBefore,
-          balance_after: balanceAfter,
-          status: 'SUCCESSFUL',
+          balanceBefore,
+          balanceAfter,
           narration: 'Wallet funding',
           metadata: { action: 'fund' },
         },
         trx,
       );
 
-      if (!transaction) {
-        throw new AppError('Unable to create transaction record', 500);
-      }
-
       return {
         message: 'Wallet funded successfully',
         reference,
-        wallet: {
-          id: updatedWallet.id,
-          balance: updatedWallet.balance,
-          currency: updatedWallet.currency,
-        },
+        wallet: toWalletResponse(updatedWallet),
         transaction: toTransactionResponse(transaction),
       };
     });
@@ -108,12 +87,8 @@ class WalletService {
         throw new AppError('Recipient not found', 404);
       }
 
-      const senderWallet = await walletRepository.getWalletByUserIdForUpdate(String(sender.id), trx);
-      const recipientWallet = await walletRepository.getWalletByUserIdForUpdate(String(recipient.id), trx);
-
-      if (!senderWallet || !recipientWallet) {
-        throw new AppError('Wallet not found', 404);
-      }
+      const senderWallet = await requireWalletByUserIdForUpdate(String(sender.id), trx);
+      const recipientWallet = await requireWalletByUserIdForUpdate(String(recipient.id), trx);
 
       if (isMoneyLessThan(senderWallet.balance, amount)) {
         throw new AppError('Insufficient wallet balance', 400);
@@ -128,32 +103,27 @@ class WalletService {
       const creditReference = `${reference}_CR`;
       const narration = payload.narration?.trim() || 'Wallet transfer';
 
-      const updatedSenderWallet = await walletRepository.updateBalance(
+      const updatedSenderWallet = await updateWalletBalanceOrThrow(
         String(senderWallet.id),
         senderBalanceAfter,
         trx,
       );
-      const updatedRecipientWallet = await walletRepository.updateBalance(
+      const updatedRecipientWallet = await updateWalletBalanceOrThrow(
         String(recipientWallet.id),
         recipientBalanceAfter,
         trx,
       );
 
-      if (!updatedSenderWallet || !updatedRecipientWallet) {
-        throw new AppError('Unable to update wallet balances', 500);
-      }
-
-      await transactionRepository.create(
+      await recordWalletTransaction(
         {
           reference: debitReference,
-          wallet_id: senderWallet.id,
-          source_wallet_id: senderWallet.id,
-          destination_wallet_id: recipientWallet.id,
-          type: 'TRANSFER_DEBIT',
+          walletId: senderWallet.id,
+          sourceWalletId: senderWallet.id,
+          destinationWalletId: recipientWallet.id,
+          transactionType: 'TRANSFER_DEBIT',
           amount,
-          balance_before: senderBalanceBefore,
-          balance_after: senderBalanceAfter,
-          status: 'SUCCESSFUL',
+          balanceBefore: senderBalanceBefore,
+          balanceAfter: senderBalanceAfter,
           narration,
           metadata: {
             action: 'transfer',
@@ -165,17 +135,16 @@ class WalletService {
         trx,
       );
 
-      await transactionRepository.create(
+      await recordWalletTransaction(
         {
           reference: creditReference,
-          wallet_id: recipientWallet.id,
-          source_wallet_id: senderWallet.id,
-          destination_wallet_id: recipientWallet.id,
-          type: 'TRANSFER_CREDIT',
+          walletId: recipientWallet.id,
+          sourceWalletId: senderWallet.id,
+          destinationWalletId: recipientWallet.id,
+          transactionType: 'TRANSFER_CREDIT',
           amount,
-          balance_before: recipientBalanceBefore,
-          balance_after: recipientBalanceAfter,
-          status: 'SUCCESSFUL',
+          balanceBefore: recipientBalanceBefore,
+          balanceAfter: recipientBalanceAfter,
           narration,
           metadata: {
             action: 'transfer',
@@ -190,11 +159,8 @@ class WalletService {
       return {
         message: 'Transfer completed successfully',
         reference,
-        senderWallet: {
-          id: updatedSenderWallet.id,
-          balance: updatedSenderWallet.balance,
-          currency: updatedSenderWallet.currency,
-        },
+        senderWallet: toWalletResponse(updatedSenderWallet),
+        recipientWallet: toWalletResponse(updatedRecipientWallet),
       };
     });
   }
@@ -203,11 +169,7 @@ class WalletService {
     const amount = formatMoneyInput(payload.amount);
 
     return getDb().transaction(async (trx) => {
-      const wallet = await walletRepository.getWalletByUserIdForUpdate(userId, trx);
-
-      if (!wallet) {
-        throw new AppError('Wallet not found', 404);
-      }
+      const wallet = await requireWalletByUserIdForUpdate(userId, trx);
 
       if (isMoneyLessThan(wallet.balance, amount)) {
         throw new AppError('Insufficient wallet balance', 400);
@@ -216,40 +178,25 @@ class WalletService {
       const balanceBefore = wallet.balance;
       const balanceAfter = subtractMoney(balanceBefore, amount);
       const reference = generateReference('wdr');
-
-      const updatedWallet = await walletRepository.updateBalance(String(wallet.id), balanceAfter, trx);
-
-      if (!updatedWallet) {
-        throw new AppError('Unable to update wallet balance', 500);
-      }
-
-      const transaction = await transactionRepository.create(
+      const updatedWallet = await updateWalletBalanceOrThrow(String(wallet.id), balanceAfter, trx);
+      const transaction = await recordWalletTransaction(
         {
           reference,
-          wallet_id: wallet.id,
-          type: 'WITHDRAWAL',
+          walletId: wallet.id,
+          transactionType: 'WITHDRAWAL',
           amount,
-          balance_before: balanceBefore,
-          balance_after: balanceAfter,
-          status: 'SUCCESSFUL',
+          balanceBefore,
+          balanceAfter,
           narration: 'Wallet withdrawal',
           metadata: { action: 'withdraw' },
         },
         trx,
       );
 
-      if (!transaction) {
-        throw new AppError('Unable to create transaction record', 500);
-      }
-
       return {
         message: 'Withdrawal completed successfully',
         reference,
-        wallet: {
-          id: updatedWallet.id,
-          balance: updatedWallet.balance,
-          currency: updatedWallet.currency,
-        },
+        wallet: toWalletResponse(updatedWallet),
         transaction: toTransactionResponse(transaction),
       };
     });
