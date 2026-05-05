@@ -7,6 +7,9 @@ export const hashValue = async (value: string) => bcrypt.hash(value, 10);
 
 export const compareHash = async (value: string, hash: string) => bcrypt.compare(value, hash);
 
+export const digestValue = (value: string) =>
+  crypto.createHash('sha256').update(value).digest('hex');
+
 export const encryptValue = (value: string) => {
   const iv = crypto.randomBytes(16);
   const key = Buffer.from(env.ENCRYPTION_KEY).subarray(0, 32);

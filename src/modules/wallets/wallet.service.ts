@@ -1,5 +1,7 @@
 import { formatMoneyInput } from '../../shared/utils/money';
 import { generateReference } from '../../shared/utils/reference';
+import { AppError } from '../../shared/errors/AppError';
+import { walletRepository } from './wallet.repository';
 import type {
   FundWalletInput,
   TransferFundsInput,
@@ -7,12 +9,19 @@ import type {
 } from './wallet.types';
 
 class WalletService {
-  async getAuthenticatedWallet() {
+  async getAuthenticatedWallet(userId: string) {
+    const wallet = await walletRepository.getWalletByUserId(userId);
+
+    if (!wallet) {
+      throw new AppError('Wallet not found', 404);
+    }
+
     return {
-      message: 'Wallet scaffold created',
       wallet: {
-        balance: '0.00',
-        currency: 'NGN',
+        id: wallet.id,
+        userId: wallet.user_id,
+        balance: wallet.balance,
+        currency: wallet.currency,
       },
     };
   }

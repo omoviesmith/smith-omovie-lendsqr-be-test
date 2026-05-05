@@ -21,7 +21,7 @@ Demo Credit is a lending application where each onboarded user owns a wallet. Th
 
 ## Features Implemented
 
-This repository is currently in planning/setup state. The target implementation includes:
+This repository currently includes:
 
 - User registration
 - Login and authenticated access
@@ -265,4 +265,4 @@ https://<candidate-name>-lendsqr-be-test.<cloud-platform-domain>
 
 ## Current Repository State
 
-The repository now includes the project scaffold, database configuration, exported ER diagram, core Knex migrations, and baseline test wiring. The remaining work is implementing the actual authentication, blacklist integration, wallet business flows, transaction logic, and deployment-ready production behavior.
+The repository now includes the project scaffold, database configuration, exported ER diagram, core Knex migrations, JWT-based authentication, onboarding-time blacklist screening, and baseline test wiring. The remaining work is implementing the full wallet money-movement business flows, transaction logic, richer test coverage, and deployment-ready production behavior.

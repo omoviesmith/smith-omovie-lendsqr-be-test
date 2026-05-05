@@ -1,11 +1,11 @@
 import type { NextFunction, Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
+import jwt, { type JwtPayload } from 'jsonwebtoken';
 
 import { env } from '../../config/env';
 
 export interface AuthenticatedRequest extends Request {
   auth?: {
-    sub: string;
+    userId: string;
   };
 }
 
@@ -20,10 +20,18 @@ export const authMiddleware = (
     return response.status(401).json({ message: 'Missing bearer token' });
   }
 
-  const token = authHeader.slice(7);
-  const payload = jwt.verify(token, env.JWT_SECRET) as { sub: string };
+  try {
+    const token = authHeader.slice(7);
+    const payload = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
 
-  request.auth = { sub: payload.sub };
+    if (typeof payload.sub !== 'string') {
+      return response.status(401).json({ message: 'Invalid authentication token' });
+    }
 
-  return next();
+    request.auth = { userId: payload.sub };
+
+    return next();
+  } catch {
+    return response.status(401).json({ message: 'Invalid authentication token' });
+  }
 };

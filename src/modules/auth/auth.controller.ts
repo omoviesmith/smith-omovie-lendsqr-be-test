@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 
+import type { AuthenticatedRequest } from '../../shared/middlewares/auth.middleware';
 import { authService } from './auth.service';
 
 class AuthController {
@@ -15,10 +16,10 @@ class AuthController {
     response.status(200).json(result);
   };
 
-  me = async (_request: Request, response: Response) => {
-    response.status(200).json({
-      message: 'Authenticated user profile endpoint placeholder',
-    });
+  me = async (request: AuthenticatedRequest, response: Response) => {
+    const result = await authService.getAuthenticatedUser(request.auth!.userId);
+
+    response.status(200).json(result);
   };
 }
 
