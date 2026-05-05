@@ -102,9 +102,9 @@ Money values should use `DECIMAL(19, 4)` in MySQL to avoid floating-point precis
 
 ## ER Diagram
 
-The final implementation should include an exported ER diagram from `dbdesigner.net` embedded here.
+![Demo Credit ER Diagram](https://mdn.alipayobjects.com/one_clip/afts/img/V8jzR7HCWvMAAAAASYAAAAgAoEACAQFr/original)
 
-Planned relationship summary:
+Relationship summary:
 
 ```text
 users 1 --- 1 wallets
