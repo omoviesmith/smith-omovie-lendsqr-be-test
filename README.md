@@ -2,37 +2,23 @@
 
 ## Overview
 
-This repository is for a production-minded implementation of the **Demo Credit Wallet API** described in the Lendsqr backend engineering assessment.
-
-The service is intended to support:
-
-- User onboarding
-- Authentication
-- Wallet creation
-- Wallet funding
-- Wallet-to-wallet transfer
-- Wallet withdrawal
-- Transaction history
-- Blacklist screening through the Lendsqr Adjutor Karma API
+This project is a production-minded implementation of the Demo Credit Wallet API described in the Lendsqr backend engineering assessment. It provides user onboarding, JWT authentication, wallet creation, wallet funding, wallet withdrawal, wallet-to-wallet transfers, transaction history, and blacklist screening through the Lendsqr Adjutor Karma API.
 
 ## Business Context
 
-Demo Credit is a lending application where each onboarded user owns a wallet. That wallet is used to receive and move money within the system. The API is designed to model those operations with clear validation, clean service boundaries, and safe database transaction handling.
+Demo Credit is a lending platform where each onboarded customer owns a wallet. That wallet is used to receive funds, withdraw funds, and transfer money to other users in the system. Because the assessment explicitly emphasizes blacklist checks, database design, and transaction scoping, this implementation treats onboarding safety and money movement consistency as first-class concerns.
 
 ## Features Implemented
 
-This repository currently includes:
-
-- User registration
-- Login and authenticated access
-- Automatic wallet creation on signup
+- User registration with automatic wallet creation
+- JWT login and authenticated profile access
+- Adjutor Karma blacklist screening during onboarding
 - Wallet funding
 - Wallet withdrawal
-- Wallet transfer between users
-- Transaction ledger and history
-- Adjutor Karma blacklist checks during onboarding
-- Unit tests for positive and negative scenarios
-- API documentation
+- Wallet-to-wallet transfer by recipient email
+- Authenticated transaction history listing
+- Swagger API documentation at `/api/v1/docs`
+- Jest and Supertest coverage for positive and negative scenarios
 
 ## Tech Stack
 
@@ -41,65 +27,75 @@ This repository currently includes:
 - Express
 - KnexJS
 - MySQL
-- JWT authentication
-- Jest and Supertest
+- JWT
+- Zod
+- Jest
+- Supertest
+- Docker and Docker Compose for local MySQL convenience
 
 ## Architecture
 
-The intended architecture is a simple layered backend:
+The code follows a simple layered architecture:
 
 `Route -> Controller -> Service -> Repository -> Database`
 
-This keeps responsibilities separate:
+Responsibilities are intentionally separated:
 
-- Routes define endpoints
-- Controllers handle request/response flow
-- Services own business logic
-- Repositories own database access
-- Shared middleware handles auth, validation, and errors
+- Routes define endpoint paths and middleware composition
+- Controllers keep request and response handling thin
+- Services own business rules and transaction scoping
+- Repositories own database queries
+- Shared middleware handles auth, validation, and error translation
+- Shared utilities handle money normalization, encryption, references, and response shaping
 
 ## Folder Structure
-
-Planned structure:
 
 ```text
 src/
   app.ts
   server.ts
   config/
+    database.ts
+    env.ts
+    swagger.ts
   database/
     migrations/
     seeds/
   modules/
+    adjutor/
     auth/
+    transactions/
     users/
     wallets/
-    transactions/
-    adjutor/
   shared/
     errors/
     middlewares/
     utils/
 
 tests/
+  auth.test.ts
+  setup-db.ts
+  transfer.test.ts
+  wallet.test.ts
+  withdrawal.test.ts
 ```
 
 ## Database Design
 
-The core entities are:
+The core data model is intentionally small and assessment-focused:
 
 - `users`
 - `wallets`
 - `transactions`
 
-High-level model:
+Key design decisions:
 
-- One user owns one wallet
-- One wallet can have many transactions
-- Transfer operations create linked debit/credit records
-- `transactions.metadata` stores structured supplementary context as JSON
-
-Money values should use `DECIMAL(19, 4)` in MySQL to avoid floating-point precision errors.
+- `wallets.user_id` is unique, enforcing one wallet per user
+- all money columns use `DECIMAL(19,4)` to avoid floating-point precision problems
+- `transactions` stores ledger records for funding, withdrawal, transfer debit, and transfer credit events
+- `source_wallet_id` and `destination_wallet_id` are nullable so non-transfer operations remain representable without fake relationships
+- `transactions.reference` is unique for traceability
+- transfer operations create two transaction rows: one debit for the sender and one credit for the recipient
 
 ## ER Diagram
 
@@ -116,51 +112,112 @@ wallets 1 --- many destination transactions
 
 ## Authentication Approach
 
-The assessment permits faux token authentication. The target implementation uses lightweight JWT authentication as a production-minded upgrade while keeping the auth layer intentionally minimal.
+The assessment permits faux token authentication. I implemented lightweight JWT authentication as a production-minded extension. The authentication layer is intentionally simple and only exists to identify the user performing wallet operations.
 
-Authentication goals:
+Authentication behavior:
 
-- Protect wallet endpoints
-- Identify the acting user
-- Avoid unnecessary auth complexity
+- `POST /api/v1/auth/register` creates the user, creates the wallet, and returns a JWT
+- `POST /api/v1/auth/login` validates credentials and returns a JWT
+- `GET /api/v1/auth/me` requires a valid bearer token
+- protected wallet and transaction routes reject unauthenticated requests
 
 ## Adjutor Karma Integration
 
-During onboarding, the service should query the Lendsqr Adjutor Karma blacklist API before creating a user. If a user is flagged, onboarding should be rejected.
+During onboarding, the service checks the Lendsqr Adjutor Karma blacklist before creating a local user account.
 
-Operational assumption:
+Current approach:
 
-- If the blacklist check cannot be completed safely, onboarding should fail closed rather than allow a risky account.
+- the registration flow normalizes the user phone number
+- the normalized phone number is used for the Karma lookup
+- if Adjutor returns a blacklist hit, onboarding is rejected
+- if the blacklist check cannot be completed safely, onboarding is blocked for safety
+
+This keeps the implementation aligned with the assessment requirement that blacklisted users should never be onboarded.
 
 ## Wallet Transaction Scoping
 
-All balance-changing operations should run inside database transactions:
+All balance-changing operations run inside Knex database transactions:
 
-- Fund wallet
-- Withdraw from wallet
-- Transfer between wallets
+- wallet funding
+- wallet withdrawal
+- wallet transfer
 
-This is especially important for transfers because both sender and recipient balances must be updated atomically.
+This is most critical for transfers because two wallet balances and two transaction records are involved. If any part of a transfer fails, the entire database transaction rolls back so balances remain consistent.
 
 ## API Endpoints
 
-Planned endpoints:
+Base URL:
 
 ```text
-POST /api/v1/auth/register
-POST /api/v1/auth/login
-GET  /api/v1/auth/me
-
-GET  /api/v1/wallets/me
-POST /api/v1/wallets/fund
-POST /api/v1/wallets/withdraw
-POST /api/v1/wallets/transfer
-
-GET  /api/v1/transactions
-GET  /api/v1/docs
+/api/v1
 ```
 
-Example transfer request:
+Endpoints:
+
+| Method | Path | Description | Auth |
+| --- | --- | --- | --- |
+| `POST` | `/auth/register` | Register user and create wallet | No |
+| `POST` | `/auth/login` | Authenticate user | No |
+| `GET` | `/auth/me` | Get authenticated user profile | Yes |
+| `GET` | `/wallets/me` | Get authenticated wallet | Yes |
+| `POST` | `/wallets/fund` | Fund wallet | Yes |
+| `POST` | `/wallets/withdraw` | Withdraw from wallet | Yes |
+| `POST` | `/wallets/transfer` | Transfer to another user | Yes |
+| `GET` | `/transactions` | List wallet transactions | Yes |
+| `GET` | `/docs` | Swagger UI | No |
+
+Sample requests:
+
+```http
+POST /api/v1/auth/register
+Content-Type: application/json
+```
+
+```json
+{
+  "firstName": "Smith",
+  "lastName": "Omovie",
+  "email": "smith@example.com",
+  "phone": "2348012345678",
+  "password": "Password123"
+}
+```
+
+```http
+POST /api/v1/auth/login
+Content-Type: application/json
+```
+
+```json
+{
+  "email": "smith@example.com",
+  "password": "Password123"
+}
+```
+
+```http
+POST /api/v1/wallets/fund
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+```json
+{
+  "amount": 5000
+}
+```
+
+```http
+POST /api/v1/wallets/withdraw
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+```json
+{
+  "amount": 2500
+}
+```
 
 ```http
 POST /api/v1/wallets/transfer
@@ -176,28 +233,43 @@ Content-Type: application/json
 }
 ```
 
-## Environment Variables
+```http
+GET /api/v1/transactions
+Authorization: Bearer <token>
+```
 
-Expected environment variables:
+Swagger UI is available locally at:
 
 ```text
-NODE_ENV=
-PORT=
-DB_HOST=
-DB_PORT=
-DB_USER=
-DB_PASSWORD=
-DB_NAME=
-JWT_SECRET=
-JWT_EXPIRES_IN=
-ADJUTOR_API_KEY=
-ADJUTOR_BASE_URL=
-ENCRYPTION_KEY=
+http://localhost:3000/api/v1/docs
 ```
+
+## Environment Variables
+
+The application expects these environment variables:
+
+```text
+NODE_ENV=development
+PORT=3000
+APP_NAME=demo-credit-api
+API_PREFIX=/api/v1
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=password
+DB_NAME=demo_credit
+JWT_SECRET=change-me
+JWT_EXPIRES_IN=1d
+ADJUTOR_API_KEY=change-me
+ADJUTOR_BASE_URL=https://adjutor.lendsqr.com/v2
+ENCRYPTION_KEY=12345678901234567890123456789012
+```
+
+Use `.env.example` as the starting point for a local `.env`.
 
 ## Local Setup
 
-Once the implementation exists, local setup should follow this shape:
+Normal Node.js setup:
 
 ```bash
 npm install
@@ -206,15 +278,31 @@ npm run migrate
 npm run dev
 ```
 
+The API will then be available at:
+
+```text
+http://localhost:3000/api/v1
+```
+
+Docker support is included for local development convenience. The API can also be run directly with Node.js using the setup instructions above.
+
+If you want MySQL via Docker Compose:
+
+```bash
+docker compose up -d mysql
+npm run migrate
+npm run dev
+```
+
 ## Running Migrations
 
-Expected command:
+Run the latest migrations:
 
 ```bash
 npm run migrate
 ```
 
-Rollback command:
+Rollback the latest batch:
 
 ```bash
 npm run migrate:rollback
@@ -222,47 +310,67 @@ npm run migrate:rollback
 
 ## Running Tests
 
-Expected command:
+Run the test suite:
 
 ```bash
 npm test
 ```
 
-Tests should cover:
+Test setup notes:
 
-- Successful registration
-- Blacklisted-user rejection
-- Duplicate-user rejection
-- Successful login
-- Auth-protected route access
-- Funding, withdrawal, and transfer flows
-- Insufficient-balance and invalid-input failures
+- tests run against a dedicated MySQL test database derived from `DB_NAME` with a `_test` suffix
+- the test harness creates the test database automatically if it does not exist
+- Knex migrations run automatically before the suite executes
+- each test truncates `users`, `wallets`, and `transactions` between cases
+- local MySQL must be available before running `npm test`
+
+Current test coverage includes:
+
+- register user successfully
+- reject duplicate email
+- reject blacklisted user
+- login user successfully
+- reject login with wrong password
+- reject unauthenticated wallet access
+- get authenticated wallet
+- fund wallet successfully
+- reject invalid funding amount
+- withdraw successfully
+- reject withdrawal with insufficient balance
+- transfer successfully
+- reject transfer to self
+- reject transfer to missing recipient
+- reject transfer with insufficient balance
+- ensure failed transfer does not change balances
+- list transactions successfully
 
 ## Deployment
 
-The target deployment is a public cloud-hosted API, such as Render, with a MySQL database and environment variables configured in the hosting platform.
+Deployment has not been completed yet in this repository state. The intended target is a public Render deployment backed by MySQL, with environment variables configured in the platform dashboard.
 
-Expected public URL format:
+Planned reviewer-facing URL shape:
 
 ```text
-https://<candidate-name>-lendsqr-be-test.<cloud-platform-domain>
+https://<service-name>.onrender.com/api/v1
 ```
+
+Once deployment is completed, this section should be updated with the live base URL and any platform-specific notes.
 
 ## Assumptions
 
-- The wallet uses a single default currency unless multi-currency support is added later.
-- Funding and withdrawal are internal wallet-ledger operations because the assessment does not require external payment gateway or bank payout integrations.
-- JWT authentication is used as a pragmatic improvement over faux-token auth.
-- Blacklist screening is mandatory for onboarding.
+- The wallet currently supports `NGN` by default.
+- JWT authentication was implemented as an upgrade over the permitted faux token authentication.
+- Adjutor Karma failure blocks onboarding for safety.
+- Funding is simulated because no real payment gateway is required.
+- Withdrawal is simulated because no bank payout integration is required.
+- Transfers use recipient email as the lookup key for the destination wallet.
+- Money is stored using decimal-safe database fields and handled with string-safe helpers in business logic.
 
 ## Future Improvements
 
-- Add refresh-token support
-- Add idempotency keys for money-moving endpoints
-- Add rate limiting and audit logging
-- Add background jobs for external integrations
-- Add stronger observability and production monitoring
-
-## Current Repository State
-
-The repository now includes the project scaffold, database configuration, exported ER diagram, core Knex migrations, JWT-based authentication, onboarding-time blacklist screening, wallet funding/withdrawal/transfer flows with transaction scoping, transaction history listing, and baseline acceptance-oriented tests. The remaining work is richer test coverage, fuller API documentation, and deployment-ready production behavior.
+- add idempotency keys for money-moving endpoints
+- add refresh token and token revocation support
+- add pagination and filtering to transaction history
+- add rate limiting, structured audit logs, and stronger observability
+- add richer wallet ownership and beneficiary validation rules
+- add live deployment and platform health monitoring
