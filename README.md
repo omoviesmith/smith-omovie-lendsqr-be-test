@@ -178,7 +178,7 @@ Content-Type: application/json
   "firstName": "Smith",
   "lastName": "Omovie",
   "email": "smith@example.com",
-  "phone": "2348012345678",
+  "phone": "+2348012345678",
   "password": "Password123"
 }
 ```

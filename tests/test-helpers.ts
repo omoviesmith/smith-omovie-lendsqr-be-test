@@ -18,7 +18,7 @@ export const mockAdjutorBlacklistMatch = () =>
     json: async () => ({
       status: 'success',
       data: {
-        karma_identity: '2348012345678',
+        karma_identity: '+2348012345678',
       },
     }),
   } as Response);

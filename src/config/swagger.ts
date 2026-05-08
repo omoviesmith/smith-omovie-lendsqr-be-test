@@ -42,7 +42,7 @@ export const swaggerDocument = {
           firstName: { type: 'string', example: 'Smith' },
           lastName: { type: 'string', example: 'Omovie' },
           email: { type: 'string', format: 'email', example: 'smith@example.com' },
-          phone: { type: 'string', example: '2348012345678' },
+          phone: { type: 'string', example: '+2348012345678' },
           createdAt: { type: 'string', format: 'date-time' },
           updatedAt: { type: 'string', format: 'date-time' },
         },
@@ -94,7 +94,7 @@ export const swaggerDocument = {
           firstName: { type: 'string', example: 'Smith' },
           lastName: { type: 'string', example: 'Omovie' },
           email: { type: 'string', format: 'email', example: 'smith@example.com' },
-          phone: { type: 'string', example: '2348012345678' },
+          phone: { type: 'string', example: '+2348012345678' },
           password: { type: 'string', format: 'password', example: 'Password123' },
         },
       },
@@ -215,6 +215,9 @@ export const swaggerDocument = {
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/ErrorResponse' },
+                example: {
+                  message: 'User failed blacklist screening',
+                },
               },
             },
           },
@@ -223,6 +226,20 @@ export const swaggerDocument = {
             content: {
               'application/json': {
                 schema: { $ref: '#/components/schemas/ErrorResponse' },
+                examples: {
+                  duplicateEmail: {
+                    summary: 'Duplicate email',
+                    value: {
+                      message: 'Email is already registered',
+                    },
+                  },
+                  duplicatePhone: {
+                    summary: 'Duplicate phone number',
+                    value: {
+                      message: 'Phone number is already registered',
+                    },
+                  },
+                },
               },
             },
           },
@@ -265,6 +282,8 @@ export const swaggerDocument = {
       get: {
         tags: ['Auth'],
         summary: 'Get authenticated user profile',
+        description:
+          'Protected route. Click the Authorize button in Swagger UI and provide `Bearer <token>` before executing this request.',
         security: [{ bearerAuth: [] }],
         responses: {
           '200': {
@@ -290,6 +309,8 @@ export const swaggerDocument = {
       get: {
         tags: ['Wallets'],
         summary: 'Get authenticated user wallet',
+        description:
+          'Protected route. Click the Authorize button in Swagger UI and provide `Bearer <token>` before executing this request.',
         security: [{ bearerAuth: [] }],
         responses: {
           '200': {
@@ -315,6 +336,8 @@ export const swaggerDocument = {
       post: {
         tags: ['Wallets'],
         summary: 'Fund authenticated user wallet',
+        description:
+          'Protected route. Click the Authorize button in Swagger UI and provide `Bearer <token>` before executing this request.',
         security: [{ bearerAuth: [] }],
         requestBody: {
           required: true,
@@ -356,6 +379,8 @@ export const swaggerDocument = {
       post: {
         tags: ['Wallets'],
         summary: 'Withdraw from authenticated user wallet',
+        description:
+          'Protected route. Click the Authorize button in Swagger UI and provide `Bearer <token>` before executing this request.',
         security: [{ bearerAuth: [] }],
         requestBody: {
           required: true,
@@ -397,6 +422,8 @@ export const swaggerDocument = {
       post: {
         tags: ['Wallets'],
         summary: 'Transfer funds to another wallet by recipient email',
+        description:
+          'Protected route. Click the Authorize button in Swagger UI and provide `Bearer <token>` before executing this request.',
         security: [{ bearerAuth: [] }],
         requestBody: {
           required: true,
@@ -446,6 +473,8 @@ export const swaggerDocument = {
       get: {
         tags: ['Transactions'],
         summary: 'List authenticated user wallet transactions',
+        description:
+          'Protected route. Click the Authorize button in Swagger UI and provide `Bearer <token>` before executing this request.',
         security: [{ bearerAuth: [] }],
         responses: {
           '200': {

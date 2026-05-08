@@ -23,6 +23,7 @@ describe('auth routes', () => {
     expect(response.body.message).toBe('Registration successful');
     expect(response.body.token).toBeDefined();
     expect(response.body.user.email).toBe('omovie@example.com');
+    expect(response.body.user.phone).toBe('+2348012345678');
     expect(response.body.wallet.currency).toBe('NGN');
     expect(response.body.passwordHashPreview).toBeUndefined();
   });
