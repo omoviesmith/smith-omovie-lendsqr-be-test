@@ -346,15 +346,57 @@ Current test coverage includes:
 
 ## Deployment
 
-Deployment has not been completed yet in this repository state. The intended target is a public Render deployment backed by MySQL, with environment variables configured in the platform dashboard.
+The API is deployed on Render as a free web service and is backed by a production MySQL database hosted on Aiven.
 
-Planned reviewer-facing URL shape:
+Live service:
 
 ```text
-https://<service-name>.onrender.com/api/v1
+https://smith-omovie-lendsqr-be-test.onrender.com
 ```
 
-Once deployment is completed, this section should be updated with the live base URL and any platform-specific notes.
+Live API base URL:
+
+```text
+https://smith-omovie-lendsqr-be-test.onrender.com/api/v1
+```
+
+Live Swagger documentation:
+
+```text
+https://smith-omovie-lendsqr-be-test.onrender.com/api/v1/docs/#/
+```
+
+Render configuration:
+
+```text
+Service name: smith-omovie-lendsqr-be-test
+Build command: npm install --include=dev && npm run build
+Start command: npm start
+Instance type: Free
+```
+
+Production database:
+
+- Provider: Aiven MySQL
+- Engine: MySQL 8
+- SSL: enabled
+- Production migrations: applied successfully
+- Environment variables: configured in Render for database credentials, JWT settings, Adjutor settings, encryption, and MySQL SSL behavior
+
+Final live verification status:
+
+- Health endpoint: passed
+- Swagger docs: passed
+- Register user: passed
+- Login user: passed
+- Fund wallet: passed
+- Register second user: passed
+- Transfer to second user: passed
+- Withdraw from wallet: passed
+- View transaction history: passed
+- Invalid withdrawal: passed with expected `400`
+- Transfer with insufficient balance: passed with expected `400`
+- Unauthenticated access: passed with expected `401`
 
 ## Assumptions
 
