@@ -1,0 +1,41 @@
+services:
+  - type: web
+    name: smith-omovie-lendsqr-be-test
+    runtime: node
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: 20.19.0
+      - key: APP_NAME
+        value: demo-credit-api
+      - key: API_PREFIX
+        value: /api/v1
+      - key: JWT_EXPIRES_IN
+        value: 1d
+      - key: ADJUTOR_BASE_URL
+        value: https://adjutor.lendsqr.com/v2
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_SSL
+        value: true
+      - key: DB_SSL_REJECT_UNAUTHORIZED
+        value: false
+      - key: JWT_SECRET
+        sync: false
+      - key: ADJUTOR_API_KEY
+        sync: false
+      - key: ENCRYPTION_KEY
+        sync: false
