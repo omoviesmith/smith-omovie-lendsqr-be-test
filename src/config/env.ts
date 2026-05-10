@@ -3,6 +3,22 @@ import { z } from 'zod';
 
 dotenv.config();
 
+const booleanFromEnv = z.preprocess((value) => {
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+
+    if (['true', '1', 'yes', 'on'].includes(normalized)) {
+      return true;
+    }
+
+    if (['false', '0', 'no', 'off'].includes(normalized)) {
+      return false;
+    }
+  }
+
+  return value;
+}, z.boolean());
+
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(3000),
@@ -13,8 +29,8 @@ const envSchema = z.object({
   DB_USER: z.string().default('root'),
   DB_PASSWORD: z.string().default('password'),
   DB_NAME: z.string().default('demo_credit'),
-  DB_SSL: z.coerce.boolean().default(false),
-  DB_SSL_REJECT_UNAUTHORIZED: z.coerce.boolean().default(true),
+  DB_SSL: booleanFromEnv.default(false),
+  DB_SSL_REJECT_UNAUTHORIZED: booleanFromEnv.default(true),
   DB_SSL_CA: z.string().optional(),
   JWT_SECRET: z.string().min(8).default('change-me'),
   JWT_EXPIRES_IN: z.string().default('1d'),
