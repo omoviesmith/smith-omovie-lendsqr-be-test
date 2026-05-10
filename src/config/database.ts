@@ -10,6 +10,17 @@ const resolveDatabaseName = () => {
   return env.NODE_ENV === 'test' ? `${env.DB_NAME}_test` : env.DB_NAME;
 };
 
+const resolveSslConfig = () => {
+  if (!env.DB_SSL) {
+    return undefined;
+  }
+
+  return {
+    rejectUnauthorized: env.DB_SSL_REJECT_UNAUTHORIZED,
+    ca: env.DB_SSL_CA?.replace(/\\n/g, '\n'),
+  };
+};
+
 export const getDb = () => {
   if (!dbInstance) {
     dbInstance = knex({
@@ -20,6 +31,7 @@ export const getDb = () => {
         user: env.DB_USER,
         password: env.DB_PASSWORD,
         database: resolveDatabaseName(),
+        ssl: resolveSslConfig(),
       },
       pool: {
         min: 0,
